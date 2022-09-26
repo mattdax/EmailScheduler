@@ -1,6 +1,8 @@
 import datetime
 import time
 import smtplib
+from imap_tools import MailBox, AND
+
 from cred import email
 from cred import password
 from cred import to
@@ -14,6 +16,9 @@ class main():
         self.email = email
         self.password = password
         self.sendTo = to
+        self.imap_ssl_host = 'imap.gmail.com'
+        self.imap_ssl_port = 993
+
         
     def loop(self):
         while True:
@@ -28,7 +33,38 @@ class main():
     
     
     def checkMail(self):
-        return
+        with MailBox(self.imap_ssl_host).login(self.email,self.password,'INBOX') as mailbox:
+            for msg in mailbox.fetch(AND(from_=self.sendTo, seen=False)):
+                if msg.subject == "TODO":
+                    print()
+                    print("TODO!")
+
+        """
+        server = imaplib.IMAP4_SSL(self.imap_ssl_host, self.imap_ssl_port)
+        server.login(self.email,self.password)
+        server.select('Inbox')
+        status, data = server.search(None, '(UNSEEN)')
+        print(data.decode('utf-8'))
+        totalEmails = 0
+        for num in data[0].split():
+            totalEmails = num
+        startEmailNum = int(totalEmails.decode('utf-8'))
+        for x in range(startEmailNum,startEmailNum-20,-1):
+            status,data = server.fetch(bytes(str(x),'utf-8'),'(BODY[HEADER.FIELDS (FROM)])')
+            start = 0
+            end = 0 
+            meta, fromEmail = data[0]
+            fromEmail = fromEmail.decode('utf-8')
+            for i in range(0,len(fromEmail),1):
+                if fromEmail[i] == '<':
+                    start = i+1
+                if fromEmail[i] == '>':
+                    end = i
+            if fromEmail == self.sendTo:
+                # TODO
+                return
+        """
+
     def sendDaily(self):
         
         SUBJECT = str(self.time.day)+"/"+str(self.time.month)+"/"+str(self.time.year)
@@ -41,4 +77,4 @@ class main():
 
         return
 x = main()
-x.sendDaily()
+x.checkMail()
